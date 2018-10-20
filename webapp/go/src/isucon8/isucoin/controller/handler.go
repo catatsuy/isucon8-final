@@ -162,11 +162,9 @@ func (h *Handler) Info(w http.ResponseWriter, r *http.Request, _ httprouter.Para
 			h.handleError(w, err, 500)
 			return
 		}
-		for _, order := range orders {
-			if err = model.FetchOrderRelation(h.db, order); err != nil {
-				h.handleError(w, err, 500)
-				return
-			}
+		if err = model.FetchOrdersRelation(h.db, orders); err != nil {
+			h.handleError(w, err, 500)
+			return
 		}
 		res["traded_orders"] = orders
 	}
