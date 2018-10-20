@@ -4,6 +4,8 @@ import (
 	"isucon8/isubank"
 	"isucon8/isulogger"
 	"log"
+	"sync"
+	"time"
 
 	"github.com/pkg/errors"
 )
@@ -19,6 +21,65 @@ const (
 type Setting struct {
 	Name string
 	Val  string
+}
+
+type cacheLog struct {
+	// Setが多いならsync.Mutex
+	sync.Mutex
+	items  []isulogger.Log
+	logger *isulogger.Isulogger
+}
+
+func SetLogger(d QueryExecutor) error {
+	var err error
+	mCacheLog.logger, err = Logger(d)
+
+	return err
+}
+
+func SetDB(d QueryExecutor) {
+	var err error
+	mCacheLog.logger, err = Logger(d)
+	if err != nil {
+		log.Printf("[WARN] new logger failed. err:%s", err)
+		panic(err)
+	}
+
+	c := time.Tick(1 * time.Second)
+	go func() {
+		for {
+			ls := mCacheLog.Rotate()
+			err := mCacheLog.logger.SendBulk(ls)
+			if err != nil {
+				log.Printf("[WARN] logger send failed. err:%s", err)
+			}
+			<-c
+		}
+	}()
+}
+
+var mCacheLog = NewCacheLog()
+
+func NewCacheLog() *cacheLog {
+	m := make([]isulogger.Log, 0, 100)
+	c := &cacheLog{
+		items: m,
+	}
+	return c
+}
+
+func (c *cacheLog) Append(value isulogger.Log) {
+	c.Lock()
+	c.items = append(c.items, value)
+	c.Unlock()
+}
+
+func (c *cacheLog) Rotate() []isulogger.Log {
+	c.Lock()
+	tmp := c.items
+	c.items = make([]isulogger.Log, 0, 100)
+	c.Unlock()
+	return tmp
 }
 
 func SetSetting(d QueryExecutor, k, v string) error {
@@ -59,13 +120,9 @@ func Logger(d QueryExecutor) (*isulogger.Isulogger, error) {
 }
 
 func sendLog(d QueryExecutor, tag string, v interface{}) {
-	logger, err := Logger(d)
-	if err != nil {
-		log.Printf("[WARN] new logger failed. tag: %s, v: %v, err:%s", tag, v, err)
-		return
-	}
-	err = logger.Send(tag, v)
-	if err != nil {
-		log.Printf("[WARN] logger send failed. tag: %s, v: %v, err:%s", tag, v, err)
-	}
+	mCacheLog.Append(isulogger.Log{
+		Tag:  tag,
+		Time: time.Now(),
+		Data: v,
+	})
 }
