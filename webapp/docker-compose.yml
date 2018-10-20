@@ -1,0 +1,40 @@
+version: '2'
+services:
+  nginx:
+    image: nginx:1.15.3-alpine
+    volumes:
+      - ./nginx:/etc/nginx
+    ports:
+      - "443:443"
+    links:
+      - isucoin
+
+  isucoin:
+    environment:
+      ISU_APP_PORT:    '5000'
+      ISU_DB_HOST:     'mysql'
+      ISU_DB_PORT:     '3306'
+      ISU_DB_USER:     'isucon'
+      ISU_DB_PASSWORD: 'isucon'
+      ISU_DB_NAME:     'isucoin'
+      ISU_PUBLIC_DIR:  '/public'
+    links:
+      - mysql
+    volumes:
+      - ./public:/public
+
+  mysql:
+    image: mysql:8
+    environment:
+      - "TZ=Asia/Tokyo"
+      - "MYSQL_ROOT_PASSWORD=root"
+    volumes:
+      - mysql:/var/lib/mysql
+      - ./sql:/docker-entrypoint-initdb.d
+      - ./mysql/conf.d:/etc/mysql/conf.d
+    # development only
+    ports:
+      - "13306:3306"
+
+volumes:
+  mysql:

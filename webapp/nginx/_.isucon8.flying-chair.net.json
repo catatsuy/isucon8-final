@@ -1,0 +1,5 @@
+{
+	"domain": "*.isucon8.flying-chair.net",
+	"certUrl": "https://acme-v02.api.letsencrypt.org/acme/cert/036337c61f4f2d38ee1e8314737740d95b0b",
+	"certStableUrl": "https://acme-v02.api.letsencrypt.org/acme/cert/036337c61f4f2d38ee1e8314737740d95b0b"
+}
