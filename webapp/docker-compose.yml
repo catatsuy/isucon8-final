@@ -16,18 +16,18 @@ services:
     ports:
       - "50000:5000"
 
-  mysql:
-    image: mysql:8
-    environment:
-      - "TZ=Asia/Tokyo"
-      - "MYSQL_ROOT_PASSWORD=root"
-    volumes:
-      - mysql:/var/lib/mysql
-      - ./sql:/docker-entrypoint-initdb.d
-      - ./mysql/conf.d:/etc/mysql/conf.d
-    # development only
-    ports:
-      - "13306:3306"
-
-volumes:
-  mysql:
+#  mysql:
+#    image: mysql:8
+#    environment:
+#      - "TZ=Asia/Tokyo"
+#      - "MYSQL_ROOT_PASSWORD=root"
+#    volumes:
+#      - mysql:/var/lib/mysql
+#      - ./sql:/docker-entrypoint-initdb.d
+#      - ./mysql/conf.d:/etc/mysql/conf.d
+#    # development only
+#    ports:
+#      - "13306:3306"
+#
+#volumes:
+#  mysql:
