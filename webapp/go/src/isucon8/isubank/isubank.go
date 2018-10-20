@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"time"
 )
 
 var (
@@ -17,7 +18,22 @@ var (
 
 	// 仮決済時または残高チェック時に残高が不足している
 	ErrCreditInsufficient = errors.New("credit is insufficient")
+
+	IsubankClient http.Client
 )
+
+func init() {
+	transport := &http.Transport{
+		MaxIdleConns:        500,
+		MaxIdleConnsPerHost: 200,
+		IdleConnTimeout:     120 * time.Second,
+	}
+
+	IsubankClient = http.Client{
+		Timeout:   5 * time.Second,
+		Transport: transport,
+	}
+}
 
 type isubankResponse interface {
 	setStatus(int)
@@ -155,7 +171,8 @@ func (b *Isubank) request(p string, v interface{}, r isubankResponse) error {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+b.appID)
 
-	res, err := http.DefaultClient.Do(req)
+	//res, err := http.DefaultClient.Do(req)
+	res, err := IsubankClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("isubank request failed. err: %s", err)
 	}

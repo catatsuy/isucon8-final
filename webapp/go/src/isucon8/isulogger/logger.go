@@ -22,9 +22,27 @@ type Log struct {
 	Data interface{} `json:"data"`
 }
 
+var (
+	IsulogClient http.Client
+)
+
+
 type Isulogger struct {
 	endpoint *url.URL
 	appID    string
+}
+
+func init() {
+	transport := &http.Transport{
+		MaxIdleConns:        500,
+		MaxIdleConnsPerHost: 200,
+		IdleConnTimeout:     120 * time.Second,
+	}
+
+	IsulogClient = http.Client{
+		Timeout:   5 * time.Second,
+		Transport: transport,
+	}
 }
 
 // NewIsulogger はIsuloggerを初期化します
@@ -76,7 +94,7 @@ func (b *Isulogger) request(p string, v interface{}) error {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+b.appID)
 
-	res, err := http.DefaultClient.Do(req)
+	res, err := IsulogClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("logger request failed. err: %s", err)
 	}

@@ -1,9 +1,9 @@
 package model
 
 import (
-	"sort"
 	"database/sql"
 	"isucon8/isubank"
+	"sort"
 	"time"
 
 	"github.com/pkg/errors"
