@@ -43,7 +43,7 @@ func getOpenOrderByID(tx *sql.Tx, id int64) (*Order, error) {
 	if order.ClosedAt != nil {
 		return nil, ErrOrderAlreadyClosed
 	}
-	order.User, err = getUserByIDWithLock(tx, order.UserID)
+	order.User, err = GetUserByID(tx, order.UserID)
 	if err != nil {
 		return nil, errors.Wrap(err, "getUserByIDWithLock sell user")
 	}
@@ -85,7 +85,7 @@ func AddOrder(tx *sql.Tx, ot string, userID, amount, price int64) (*Order, error
 	if amount <= 0 || price <= 0 {
 		return nil, ErrParameterInvalid
 	}
-	user, err := getUserByIDWithLock(tx, userID)
+	user, err := GetUserByID(tx, userID)
 	if err != nil {
 		return nil, errors.Wrapf(err, "getUserByIDWithLock failed. id:%d", userID)
 	}
