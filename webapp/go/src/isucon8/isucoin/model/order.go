@@ -92,12 +92,12 @@ func FetchOrdersRelation(d QueryExecutor, orders []*Order) error {
 		tradeIds = append(tradeIds, strconv.FormatInt(o.TradeID, 10))
 	}
 
-	users, err := scanUsers(d.Query("SELECT * FROM user WHERE id = (?)", strings.Join(userIds, ",")))
+	users, err := scanUsers(d.Query("SELECT * FROM user WHERE id IN (?)", strings.Join(userIds, ",")))
 	if err != nil {
 		return errors.Wrapf(err, "GetUserByID failed. id")
 	}
 
-	trades, err := scanTrades(d.Query("SELECT * FROM trade WHERE id = (?)", strings.Join(tradeIds, ",")))
+	trades, err := scanTrades(d.Query("SELECT * FROM trade WHERE id IN (?)", strings.Join(tradeIds, ",")))
 	if err != nil {
 		return errors.Wrapf(err, "GetTradeByID failed. id")
 	}
