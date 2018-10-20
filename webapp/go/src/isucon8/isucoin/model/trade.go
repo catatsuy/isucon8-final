@@ -9,6 +9,7 @@ import (
 
 	"github.com/pkg/errors"
 	"strings"
+	"strconv"
 )
 
 //go:generate scanner
@@ -148,7 +149,7 @@ func commitReservedOrder(tx *sql.Tx, order *Order, targets []*Order, reserves []
 			"user_id":  o.UserID,
 			"trade_id": tradeID,
 		})
-		ids = append(ids, string(o.ID))
+		ids = append(ids, strconv.FormatInt(o.ID, 10))
 	}
 	if _, err = tx.Exec(`UPDATE orders SET trade_id = ?, closed_at = NOW(6) WHERE id IN (?)`, tradeID, strings.Join(ids, ",")); err != nil {
 		return errors.Wrap(err, "update order for trade")
