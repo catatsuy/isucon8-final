@@ -13,7 +13,7 @@ func scanCandlestickDatas(rows *sql.Rows, e error) (candlestickDatas []*Candlest
 	defer func() {
 		err = rows.Close()
 	}()
-	candlestickDatas = []*CandlestickData{}
+	candlestickDatas = make([]*CandlestickData, 0, 100)
 	for rows.Next() {
 		var v CandlestickData
 		if err = rows.Scan(&v.Time, &v.Open, &v.Close, &v.High, &v.Low); err != nil {
@@ -43,7 +43,7 @@ func scanOrders(rows *sql.Rows, e error) (orders []*Order, err error) {
 	defer func() {
 		err = rows.Close()
 	}()
-	orders = []*Order{}
+	orders = make([]*Order, 0, 100)
 	for rows.Next() {
 		var v Order
 		var closedAt mysql.NullTime
@@ -111,7 +111,7 @@ func scanTrades(rows *sql.Rows, e error) (trades []*Trade, err error) {
 	defer func() {
 		err = rows.Close()
 	}()
-	trades = []*Trade{}
+	trades = make([]*Trade, 0, 100)
 	for rows.Next() {
 		var v Trade
 		if err = rows.Scan(&v.ID, &v.Amount, &v.Price, &v.CreatedAt); err != nil {
