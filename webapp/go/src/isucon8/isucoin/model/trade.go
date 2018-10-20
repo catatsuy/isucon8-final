@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"strings"
 )
 
 //go:generate scanner
@@ -137,10 +138,9 @@ func commitReservedOrder(tx *sql.Tx, order *Order, targets []*Order, reserves []
 		"price":    order.Price,
 		"amount":   order.Amount,
 	})
+
+	var ids []string
 	for _, o := range append(targets, order) {
-		if _, err = tx.Exec(`UPDATE orders SET trade_id = ?, closed_at = NOW(6) WHERE id = ?`, tradeID, o.ID); err != nil {
-			return errors.Wrap(err, "update order for trade")
-		}
 		sendLog(tx, o.Type+".trade", map[string]interface{}{
 			"order_id": o.ID,
 			"price":    order.Price,
@@ -148,7 +148,12 @@ func commitReservedOrder(tx *sql.Tx, order *Order, targets []*Order, reserves []
 			"user_id":  o.UserID,
 			"trade_id": tradeID,
 		})
+		ids = append(ids, string(o.ID))
 	}
+	if _, err = tx.Exec(`UPDATE orders SET trade_id = ?, closed_at = NOW(6) WHERE id IN (?)`, tradeID, strings.Join(ids, ",")); err != nil {
+		return errors.Wrap(err, "update order for trade")
+	}
+
 	bank, err := Isubank(tx)
 	if err != nil {
 		return errors.Wrap(err, "isubank init failed")
