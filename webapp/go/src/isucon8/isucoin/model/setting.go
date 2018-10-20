@@ -38,16 +38,12 @@ func SetLogger(d QueryExecutor) error {
 }
 
 func SetDB(d QueryExecutor) {
-	var err error
-	mCacheLog.logger, err = Logger(d)
-	if err != nil {
-		log.Printf("[WARN] new logger failed. err:%s", err)
-		panic(err)
-	}
+	c := time.Tick(2 * time.Second)
 
-	c := time.Tick(1 * time.Second)
 	go func() {
 		for {
+			mCacheLog.logger, _ = Logger(d)
+
 			ls := mCacheLog.Rotate()
 			err := mCacheLog.logger.SendBulk(ls)
 			if err != nil {
