@@ -27,6 +27,8 @@ type CandlestickData struct {
 	Low   int64     `json:"low"`
 }
 
+var mCacheCandlestick = map[string][]*CandlestickData{}
+
 func GetTradeByID(d QueryExecutor, id int64) (*Trade, error) {
 	return scanTrade(d.Query("SELECT * FROM trade WHERE id = ?", id))
 }
@@ -36,6 +38,10 @@ func GetLatestTrade(d QueryExecutor) (*Trade, error) {
 }
 
 func GetCandlestickData(d QueryExecutor, mt time.Time, tf string) ([]*CandlestickData, error) {
+	if v, ok := mCacheCandlestick[tf]; ok {
+		return v, nil
+	}
+
 	query := fmt.Sprintf(`
 		SELECT m.t, a.price, b.price, m.h, m.l
 		FROM (
@@ -53,7 +59,14 @@ func GetCandlestickData(d QueryExecutor, mt time.Time, tf string) ([]*Candlestic
 		JOIN trade b ON b.id = m.max_id
 		ORDER BY m.t
 	`, tf, "%Y-%m-%d %H:%i:%s")
-	return scanCandlestickDatas(d.Query(query, mt))
+
+	rv, err := scanCandlestickDatas(d.Query(query, mt))
+	if err != nil {
+		return nil, err
+	}
+	mCacheCandlestick[tf] = rv
+
+	return rv, nil
 }
 
 func HasTradeChanceByOrder(d QueryExecutor, orderID int64) (bool, error) {
