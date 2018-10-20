@@ -1,6 +1,7 @@
 package model
 
 import (
+	"sort"
 	"database/sql"
 	"isucon8/isubank"
 	"time"
@@ -28,11 +29,24 @@ type Order struct {
 }
 
 func GetOrdersByUserID(d QueryExecutor, userID int64) ([]*Order, error) {
-	return scanOrders(d.Query("SELECT * FROM orders WHERE user_id = ? AND (closed_at IS NULL OR trade_id IS NOT NULL) ORDER BY created_at ASC", userID))
+	//return scanOrders(d.Query("SELECT * FROM orders WHERE user_id = ? AND (closed_at IS NULL OR trade_id IS NOT NULL) ORDER BY created_at ASC", userID))
+	orders, err := scanOrders(d.Query("SELECT * FROM orders WHERE user_id = ? AND (closed_at IS NULL OR trade_id IS NOT NULL)", userID))
+
+	sort.Slice(orders, func(i, j int) bool {
+		return orders[i].CreatedAt.Before(orders[j].CreatedAt)
+	})
+
+	return orders, err
 }
 
 func GetOrdersByUserIDAndLastTradeId(d QueryExecutor, userID int64, tradeID int64) ([]*Order, error) {
-	return scanOrders(d.Query(`SELECT * FROM orders WHERE user_id = ? AND trade_id IS NOT NULL AND trade_id > ? ORDER BY created_at ASC`, userID, tradeID))
+	//return scanOrders(d.Query(`SELECT * FROM orders WHERE user_id = ? AND trade_id IS NOT NULL AND trade_id > ? ORDER BY created_at ASC`, userID, tradeID))
+	orders, err := scanOrders(d.Query(`SELECT * FROM orders WHERE user_id = ? AND trade_id IS NOT NULL AND trade_id > ?`, userID, tradeID))
+	sort.Slice(orders, func(i, j int) bool {
+		return orders[i].CreatedAt.Before(orders[j].CreatedAt)
+	})
+
+	return orders, err
 }
 
 func getOpenOrderByID(tx *sql.Tx, id int64) (*Order, error) {
