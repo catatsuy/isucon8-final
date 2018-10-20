@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"strconv"
+	"strings"
 )
 
 const (
@@ -80,18 +82,41 @@ func GetHighestBuyOrder(d QueryExecutor) (*Order, error) {
 	return scanOrder(d.Query("SELECT * FROM orders WHERE type = ? AND closed_at IS NULL ORDER BY price DESC, created_at ASC LIMIT 1", OrderTypeBuy))
 }
 
-func FetchOrderRelation(d QueryExecutor, order *Order) error {
+func FetchOrdersRelation(d QueryExecutor, orders []*Order) error {
+	userIds := make ([]string, 0, len(orders))
+	tradeIds := make ([]string, 0, len(orders))
 	var err error
-	order.User, err = GetUserByID(d, order.UserID)
+
+	for _, o := range orders {
+		userIds = append(userIds, strconv.FormatInt(o.UserID, 10))
+		tradeIds = append(tradeIds, strconv.FormatInt(o.TradeID, 10))
+	}
+
+	users, err := scanUsers(d.Query("SELECT * FROM user WHERE id = (?)", strings.Join(userIds, ",")))
 	if err != nil {
 		return errors.Wrapf(err, "GetUserByID failed. id")
 	}
-	if order.TradeID > 0 {
-		order.Trade, err = GetTradeByID(d, order.TradeID)
-		if err != nil {
-			return errors.Wrapf(err, "GetTradeByID failed. id")
+
+	trades, err := scanTrades(d.Query("SELECT * FROM trade WHERE id = (?)", strings.Join(tradeIds, ",")))
+	if err != nil {
+		return errors.Wrapf(err, "GetTradeByID failed. id")
+	}
+
+	for _, o := range orders {
+		for _, u := range users {
+			if o.UserID == u.ID {
+				o.User = u
+				break
+			}
+		}
+		for _, t := range trades {
+			if o.TradeID == t.ID {
+				o.Trade = t
+				break
+			}
 		}
 	}
+
 	return nil
 }
 
