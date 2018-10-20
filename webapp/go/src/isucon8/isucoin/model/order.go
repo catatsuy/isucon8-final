@@ -73,11 +73,45 @@ func getOrderByIDWithLock(tx *sql.Tx, id int64) (*Order, error) {
 }
 
 func GetLowestSellOrder(d QueryExecutor) (*Order, error) {
-	return scanOrder(d.Query("SELECT * FROM orders WHERE type = ? AND closed_at IS NULL ORDER BY price ASC, created_at ASC LIMIT 1", OrderTypeSell))
+	orders, err := scanOrders(d.Query("SELECT * FROM orders WHERE type = ? AND closed_at IS NULL", OrderTypeSell))
+	if err != nil {
+		return nil, err
+	}
+
+	var result Order
+	var minPrice int64
+	var minCreatedAt time.Time
+	for _, o := range orders{
+		if (o.Price < minPrice) {
+			minPrice = o.Price
+			if (o.CreatedAt.After(minCreatedAt)) {
+				minCreatedAt = o.CreatedAt
+				result = *o
+			}
+		}
+	}
+	return &result, nil
 }
 
 func GetHighestBuyOrder(d QueryExecutor) (*Order, error) {
-	return scanOrder(d.Query("SELECT * FROM orders WHERE type = ? AND closed_at IS NULL ORDER BY price DESC, created_at ASC LIMIT 1", OrderTypeBuy))
+	orders, err := scanOrders(d.Query("SELECT * FROM orders WHERE type = ? AND closed_at IS NULL", OrderTypeSell))
+	if err != nil {
+		return nil, err
+	}
+
+	var result Order
+	var maxPrice int64
+	var minCreatedAt time.Time
+	for _, o := range orders{
+		if (o.Price > maxPrice) {
+			maxPrice = o.Price
+			if (o.CreatedAt.After(minCreatedAt)) {
+				minCreatedAt = o.CreatedAt
+				result = *o
+			}
+		}
+	}
+	return &result, nil
 }
 
 func FetchOrderRelation(d QueryExecutor, order *Order) error {
