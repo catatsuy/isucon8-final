@@ -13,6 +13,8 @@ services:
       - mysql
     volumes:
       - ./public:/public
+    ports:
+      - "50000:5000"
 
   mysql:
     image: mysql:8
