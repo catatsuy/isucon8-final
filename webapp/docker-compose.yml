@@ -1,14 +1,5 @@
 version: '2'
 services:
-  nginx:
-    image: nginx:1.15.3-alpine
-    volumes:
-      - ./nginx:/etc/nginx
-    ports:
-      - "443:443"
-    links:
-      - isucoin
-
   isucoin:
     environment:
       ISU_APP_PORT:    '5000'
