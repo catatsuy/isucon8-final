@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"golang.org/x/sync/errgroup"
+	"sync/atomic"
 )
 
 //go:generate scanner
@@ -180,9 +182,8 @@ func tryTrade(tx *sql.Tx, orderID int64) error {
 
 	restAmount := order.Amount
 	unitPrice := order.Price
-	reserves := make([]int64, 1, order.Amount+1)
-	targets := make([]*Order, 0, order.Amount)
 
+	reserves := make([]int64, 1, 1)
 	reserves[0], err = reserveOrder(tx, order, unitPrice)
 	if err != nil {
 		return err
@@ -214,31 +215,41 @@ func tryTrade(tx *sql.Tx, orderID int64) error {
 		return ErrNoOrderForTrade
 	}
 
-	for _, to := range targetOrders {
-		to, err = getOpenOrderByID(tx, to.ID)
-		if err != nil {
-			if err == ErrOrderAlreadyClosed {
-				continue
+	resultLen := len(targetOrders)
+	reserve0 := reserves[0]
+	reserves = append(make([]int64, 1, resultLen+1), reserve0)
+	targets := make([]*Order, 0, resultLen)
+	eg := errgroup.Group{}
+	for i, to := range targetOrders {
+		eg.Go(func() error {
+			to, err = getOpenOrderByID(tx, to.ID)
+			if err != nil {
+				if err == ErrOrderAlreadyClosed {
+					return nil
+				}
+				return errors.Wrap(err, "getOpenOrderByID  buy_order")
 			}
-			return errors.Wrap(err, "getOpenOrderByID  buy_order")
-		}
-		if to.Amount > restAmount {
-			continue
-		}
-		rid, err := reserveOrder(tx, to, unitPrice)
-		if err != nil {
-			if err == isubank.ErrCreditInsufficient {
-				continue
+			if to.Amount > atomic.LoadInt64(&restAmount) {
+				return nil
 			}
-			return err
-		}
-		reserves = append(reserves, rid)
-		targets = append(targets, to)
-		restAmount -= to.Amount
-		if restAmount == 0 {
-			break
-		}
+			rid, err := reserveOrder(tx, to, unitPrice)
+			if err != nil {
+				if err == isubank.ErrCreditInsufficient {
+					return nil
+				}
+				return err
+			}
+			reserves[i+1] = rid
+			targets[i] = to
+			atomic.AddInt64(&restAmount, -to.Amount)
+
+			return nil
+		})
 	}
+	if err := eg.Wait(); err != nil {
+		return err
+	}
+
 	if restAmount > 0 {
 		return ErrNoOrderForTrade
 	}
