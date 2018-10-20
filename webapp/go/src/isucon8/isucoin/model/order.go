@@ -131,7 +131,7 @@ func AddOrder(tx *sql.Tx, ot string, userID, amount, price int64) (*Order, error
 }
 
 func DeleteOrder(tx *sql.Tx, userID, orderID int64, reason string) error {
-	user, err := getUserByIDWithLock(tx, userID)
+	user, err := GetUserByID(tx, userID)
 	if err != nil {
 		return errors.Wrapf(err, "getUserByIDWithLock failed. id:%d", userID)
 	}
