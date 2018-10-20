@@ -54,11 +54,6 @@ func (h *Handler) Initialize(w http.ResponseWriter, r *http.Request, _ httproute
 		}
 		return nil
 	})
-	if err != nil {
-		h.handleError(w, err, 500)
-	}
-
-	err = model.SetLogger(h.db)
 
 	if err != nil {
 		h.handleError(w, err, 500)
