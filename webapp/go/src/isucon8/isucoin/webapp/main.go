@@ -9,6 +9,8 @@ import (
 	"os"
 	"time"
 
+	"isucon8/isucoin/model"
+
 	gctx "github.com/gorilla/context"
 	"github.com/gorilla/sessions"
 	"github.com/julienschmidt/httprouter"
@@ -58,6 +60,8 @@ func main() {
 	store := sessions.NewCookieStore([]byte(SessionSecret))
 
 	h := controller.NewHandler(db, store)
+
+	model.SetDB(db)
 
 	router := httprouter.New()
 	router.POST("/initialize", h.Initialize)

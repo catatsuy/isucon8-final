@@ -51,6 +51,14 @@ func (b *Isulogger) Send(tag string, data interface{}) error {
 	})
 }
 
+// SendBulk はログを送信します
+func (b *Isulogger) SendBulk(logs []Log) error {
+	if len(logs) == 0 {
+		return nil
+	}
+	return b.request("/send_bulk", logs)
+}
+
 func (b *Isulogger) request(p string, v interface{}) error {
 	u := new(url.URL)
 	*u = *b.endpoint
