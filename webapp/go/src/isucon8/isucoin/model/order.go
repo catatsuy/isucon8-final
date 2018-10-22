@@ -6,6 +6,7 @@ import (
 	"sort"
 	"time"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 )
 
@@ -80,18 +81,51 @@ func GetHighestBuyOrder(d QueryExecutor) (*Order, error) {
 	return scanOrder(d.Query("SELECT * FROM orders WHERE type = ? AND closed_at IS NULL ORDER BY price DESC, created_at ASC LIMIT 1", OrderTypeBuy))
 }
 
-func FetchOrderRelation(d QueryExecutor, order *Order) error {
+func FetchOrdersRelation(d QueryExecutor, orders []*Order) error {
+	userIds := make ([]int64, 0, len(orders))
+	tradeIds := make ([]int64, 0, len(orders))
 	var err error
-	order.User, err = GetUserByID(d, order.UserID)
+
+	for _, o := range orders {
+		userIds = append(userIds, o.UserID)
+		if o.TradeID > 0 {
+			tradeIds = append(tradeIds, o.TradeID)
+		}
+	}
+
+	userQuery, userArgs, err := sqlx.In("SELECT * FROM user WHERE id IN (?)", userIds)
 	if err != nil {
 		return errors.Wrapf(err, "GetUserByID failed. id")
 	}
-	if order.TradeID > 0 {
-		order.Trade, err = GetTradeByID(d, order.TradeID)
-		if err != nil {
-			return errors.Wrapf(err, "GetTradeByID failed. id")
+	users, err := scanUsers(d.Query(userQuery, userArgs...))
+	if err != nil {
+		return errors.Wrapf(err, "GetUserByID failed. id")
+	}
+
+	tradeQuery, tradeArgs, err := sqlx.In("SELECT * FROM trade WHERE id IN (?)", tradeIds)
+	if err != nil {
+		return errors.Wrapf(err, "GetTradeByID failed. id")
+	}
+	trades, err := scanTrades(d.Query(tradeQuery, tradeArgs...))
+	if err != nil {
+		return errors.Wrapf(err, "GetTradeByID failed. id")
+	}
+
+	for _, o := range orders {
+		for _, u := range users {
+			if o.UserID == u.ID {
+				o.User = u
+				break
+			}
+		}
+		for _, t := range trades {
+			if o.TradeID == t.ID {
+				o.Trade = t
+				break
+			}
 		}
 	}
+
 	return nil
 }
 

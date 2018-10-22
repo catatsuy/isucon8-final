@@ -34,6 +34,17 @@
   version = "v1.1.2"
 
 [[projects]]
+  digest = "1:4611e727460d3634059cbe6e0a4799aaeb426ef8150e3b26056c83e1106831c4"
+  name = "github.com/jmoiron/sqlx"
+  packages = [
+    ".",
+    "reflectx",
+  ]
+  pruneopts = ""
+  revision = "d161d7a76b5661016ad0b085869f77fd410f3e6a"
+  version = "v1.2.0"
+
+[[projects]]
   digest = "1:3c818dada3e41bdb0f509f78e6775610f1bb179449ec8c4c86a45fae35460f3f"
   name = "github.com/julienschmidt/httprouter"
   packages = ["."]
@@ -75,6 +86,7 @@
     "github.com/go-sql-driver/mysql",
     "github.com/gorilla/context",
     "github.com/gorilla/sessions",
+    "github.com/jmoiron/sqlx",
     "github.com/julienschmidt/httprouter",
     "github.com/pkg/errors",
     "golang.org/x/crypto/bcrypt",
