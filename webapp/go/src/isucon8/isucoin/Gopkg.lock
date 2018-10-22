@@ -61,6 +61,22 @@
   revision = "0e37d006457bf46f9e6692014ba72ef82c33022c"
 
 [[projects]]
+  branch = "master"
+  digest = "1:6543c75ddc1efc0041202dd49378ee2e5711b7cc82c2845c0437eef6276cc984"
+  name = "golang.org/x/net"
+  packages = ["context"]
+  pruneopts = ""
+  revision = "04a2e542c03f1d053ab3e4d6e5abcd4b66e2be8e"
+
+[[projects]]
+  branch = "master"
+  digest = "1:b2ea75de0ccb2db2ac79356407f8a4cd8f798fe15d41b381c00abf3ae8e55ed1"
+  name = "golang.org/x/sync"
+  packages = ["errgroup"]
+  pruneopts = ""
+  revision = "1d60e4601c6fd243af51cc01ddf169918a5407ca"
+
+[[projects]]
   digest = "1:8c432632a230496c35a15cfdf441436f04c90e724ad99c8463ef0c82bbe93edb"
   name = "google.golang.org/appengine"
   packages = ["cloudsql"]
@@ -78,6 +94,7 @@
     "github.com/julienschmidt/httprouter",
     "github.com/pkg/errors",
     "golang.org/x/crypto/bcrypt",
+    "golang.org/x/sync/errgroup",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1
